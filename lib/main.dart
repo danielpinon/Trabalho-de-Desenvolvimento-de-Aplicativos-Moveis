@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:hasura_connect/hasura_connect.dart';
+import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 
 void main() => runApp(MyApp());
 
-String url = 'https://hasuratester.herokuapp.com/v1/graphql';
-HasuraConnect hasuraConnect = HasuraConnect(url);
+String resposta = "";
 
 /// This Widget is the main application widget.
 class MyApp extends StatelessWidget {
@@ -13,6 +14,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+   
     return MaterialApp(
       title: _title,
       home: MyStatefulWidget(),
@@ -30,6 +32,7 @@ class MyStatefulWidget extends StatefulWidget {
 class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   //int _count = 0;
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -45,13 +48,23 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => setState(() {
+        onPressed: (){
+          var getPost = postRequest();
+          getPost.then((value){
+            setState(() {
+              if(value.statusCode == 200){
+                resposta = value.body;
+              } 
+            });
+          });
+          setState(() {
           //_count++;
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => SecondRoute()),
-          );
-        }),
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SecondRoute()),
+            );
+          });
+        },
         tooltip: 'Increment Counter',
         child: Icon(Icons.add),
       ),
@@ -59,6 +72,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     );
   }
 }
+
+
 
 class SecondRoute extends StatelessWidget {
   @override
@@ -68,30 +83,36 @@ class SecondRoute extends StatelessWidget {
         title: Text("Dados puxado do Heroku"),
       ),
       body: Center(
-        child: RaisedButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          child: Text('Go back!'),
-        ),
+        child: Text(resposta)
       ),
     );
   }
 }
 
-/*getData() async {
-  String url = 'https://hasuratester.herokuapp.com/v1/graphql';
-  Map map = {
-    'clientes': {
-      'CLI_ID',
-      'CLI_EMAIL',
-      'CLI_IDADE',
-      'CLI_NOME',
-      'CLI_PONTUACAO',
-      'CLI_TEL'
-     },
-  };
-  
-  print(await apiRequest(url, map));
+
+/*void getData(BuildContext context, var value){
+  setState(() {
+      reposta = value.body;
+  });
 }
 */
+
+Future<http.Response> postRequest () async {
+    var url ='https://hasuratester.herokuapp.com/v1/graphql';
+
+    Map data = {
+      "query":"query Clientes {\n  clientes {\n    CLI_EMAIL\n    CLI_ID\n    CLI_IDADE\n    CLI_NOME\n    CLI_PONTUACAO\n    CLI_TEL\n  }\n}",
+      "operationName":"Clientes"
+    };
+    //encode Map to JSON
+    var body = json.encode(data);
+
+    var response = await http.post(url,
+        headers: {"Content-Type": "application/json", "x-hasura-admin-secret": "123456"},
+        body: body
+    );
+    
+    //print("${response.statusCode}");
+    //print("${response.body}");
+    return response;
+}
