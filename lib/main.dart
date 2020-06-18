@@ -55,15 +55,16 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
               if(value.statusCode == 200){
                 resposta = value.body;
               } 
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SecondRoute()),
+              );
             });
           });
-          setState(() {
+          /*setState(() {
           //_count++;
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SecondRoute()),
-            );
-          });
+            
+          });*/
         },
         tooltip: 'Increment Counter',
         child: Icon(Icons.add),
